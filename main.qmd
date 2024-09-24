@@ -1,0 +1,6 @@
+---
+title: "Modélisation - Projet partie 1"
+format:
+  html:
+    code-fold: true
+---
