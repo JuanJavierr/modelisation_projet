@@ -1,6 +1,174 @@
 ---
 title: "Modélisation - Projet partie 1"
+date: 2023-10-13
+author:
+    - Hilaire Touyem
+    - Xavier Lapointe
+    - Georges-Lemuel Balogog-Mandack
+    - Xavier Péladeau
 format:
   html:
     code-fold: true
 ---
+# TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln
+
+# Import et formatage des données
+```{r}
+#| label: setup
+#| output: false
+
+library(tidyverse)
+library(gridExtra)
+
+# On charge les données
+data_filename <- "MATH60604-projet-bixi_partie1_equipe1.csv"
+raw_data <- read.csv(data_filename)
+
+# On convertit les colonnes aux types appropriés
+data <- raw_data %>%
+    mutate(
+        date = ymd_hms(dep),
+        jour = as.factor(jour),
+        mem = as.logical(mem),
+        pointe = as.factor(pointe)
+    ) %>%
+    select(-c(dep))
+
+# On ajoute des colonnes utiles à l'analyse
+data <- data %>%
+    mutate(
+        hour = format(date, format = "%H:%M"),
+        day = format(date, format = "%Y-%m-%d"),
+        is_weekend = jour %in% c("samedi", "dimanche")
+    )
+```
+
+# Analyse exploratoire
+```{r}
+#| label: EDA
+#| echo: false
+
+summary(data)
+
+"Combien de déplacements par jour de la semaine?"
+data %>%
+    group_by(jour) %>
+    summarise(n = n())
+
+"Combien de déplacements par heure de la journée?"
+data %>%
+    group_by(hour) %>%
+    summarise(n = n())
+
+"Combien de déplacements par jour?"
+data %>%
+    group_by(date) %>%
+    summarise(n = n())
+```
+
+# QUESTION 1.1 : En moyenne, les membres de BIXI effectuent-ils des trajets plus courts que les non-membres?
+```{r}
+# On crée un graphique pour visualiser la distribution des distances
+# ggplot(data, aes(x = dur, fill = mem)) +
+#     geom_histogram(bins = 30) +
+#     labs(
+#         title = "Distribution des distances des déplacements",
+#         x = "Durée (s)", y = "Nombre de déplacements"
+#     ) +
+#     theme_minimal()
+
+model <- lm(dur ~ mem, data = data)
+summary(model)
+confint(model)
+
+predci <- data.frame(cbind(
+    is_member = c(TRUE, FALSE),
+    predict(
+        model,
+        newdata = data.frame(mem = c(TRUE, FALSE)),
+        interval = "c",
+        level = 0.8
+    )
+))
+
+ggplot() +
+    geom_point(data = predci, aes(x = is_member, y = fit)) +
+    geom_ribbon(
+        data = predci,
+        aes(x = is_member, ymin = lwr, ymax = upr),
+        alpha = 0.4
+    )
+```
+
+# QUESTION 1.2 : Les résultats sont-ils les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine?
+```{r}
+# À CONFIRMER: 2 manières d'interpréter la question il me semble
+# Soit :
+model2 <- lm(dur ~ mem + is_weekend, data=data)
+summary(model)
+confint(model)
+
+anova(model, model2)
+
+# Ou:
+week_ends <- data %>%
+    filter(is_weekend)
+weekend_model <- lm(dur ~ mem, data=week_ends)
+summary(weekend_model)
+confint(weekend_model)
+
+week_days <- data %>%
+    filter(!is_weekend)
+weekday_model <- lm(dur ~ mem, data=week_days)
+summary(weekday_model)
+confint(weekday_model)
+
+
+```
+# QUESTION 2.1 : Est-ce que la durée des trajets est influencée par la météo?
+```{r}
+data <- data %>% mutate(is_raining = prec > 0)
+
+# Avec indicateur binaire de pluie
+model <- lm(dur ~ is_raining, data=data)
+summary(model)
+
+# Avec niveau de précipitation
+model <- lm(dur ~ prec, data=data)
+summary(model)
+```
+
+# QUESTION 2.2 : Au vu du résultat que vous obtenez,est-ce que vos modèles initiaux devraient être revisités?
+
+
+# QUESTION 3.1 : Les durées de trajets sont-elles différentes selon que l’on se trouve aux heures de pointe ou non en semaine?
+```{r}
+
+```
+
+# QUESTION 3.2 : Existe-t-il des différences entre l’utilisation pour les heures de pointes en semaine le matin ou le soir?
+
+# Graphiques WIP
+```{r}
+
+# On crée un graphique pour visualiser la distribution des distances
+
+plot1 <- ggplot(week_ends, aes(x = dur, fill = mem)) +
+    geom_histogram(bins = 30) +
+    labs(
+        title = "Distribution des distances des déplacements en fin de semaine",
+        x = "Durée (s)", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+
+plot2 <- ggplot(week_days, aes(x = dur, fill = mem)) +
+    geom_histogram(bins = 30) +
+    labs(
+        title = "Distribution des distances des déplacements en semaine",
+        x = "Durée (s)", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+
+grid.arrange(plot1, plot2, ncol = 1)
+
+```
