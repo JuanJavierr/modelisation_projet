@@ -10,7 +10,17 @@ format:
   html:
     code-fold: true
 ---
-# TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln
+### TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln
+### TODO: Vérifier l'impact d'enlever les valeurs aberrantes sur la précision des modèles
+
+### TODO: 
+"Chaque fois qu’un modèle statistique est employé, veillez à :
+    - rapporter les coefficients ou les différences estimées (avec des unités), avec une estimation de
+    l’incertitude,
+    - fournir des interprétations des paramètres sur une échelle adéquate,
+    - tirer des conclusions qui reflètent le contexte,
+    - discuter de la validité de vos analyses,
+    - discuter de toute lacune ou limitation de vos modèles."
 
 # Import et formatage des données
 ```{r}
@@ -37,8 +47,8 @@ data <- raw_data %>%
 # On ajoute des colonnes utiles à l'analyse
 data <- data %>%
     mutate(
-        hour = format(date, format = "%H:%M"),
-        day = format(date, format = "%Y-%m-%d"),
+        hour = as.integer(format(date, format = "%H")),
+        day = as.Date(date),
         is_weekend = jour %in% c("samedi", "dimanche")
     )
 ```
@@ -51,22 +61,47 @@ data <- data %>%
 summary(data)
 
 "Combien de déplacements par jour de la semaine?"
-data %>%
-    group_by(jour) %>
+by_weekday <- data %>%
+    group_by(jour) %>%
     summarise(n = n())
+
+ggplot() + geom_col(data=by_weekday, aes(x=jour, y=n)) +
+    labs(
+        title = "Nombre de déplacements par jour de la semaine",
+        x = "Jour de la semaine", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
 
 "Combien de déplacements par heure de la journée?"
-data %>%
+by_hour <- data %>%
     group_by(hour) %>%
     summarise(n = n())
+ggplot() + geom_col(data=by_hour, aes(x=hour, y=n)) +
+    labs(
+        title = "Nombre de déplacements par heure de la journée",
+        x = "Heure", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
 
 "Combien de déplacements par jour?"
-data %>%
-    group_by(date) %>%
+by_date <- data %>%
+    group_by(day) %>%
     summarise(n = n())
+ggplot() + geom_col(data=by_date, aes(x=day, y=n)) +
+    labs(
+        title = "Nombre de déplacements par jour",
+        x = "Date", y = "Nombre de déplacements"
+    ) +
+    theme_minimal() + scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") 
+
 ```
 
 # QUESTION 1.1 : En moyenne, les membres de BIXI effectuent-ils des trajets plus courts que les non-membres?
+$\mathbb{H}_0: \beta_1 = 0$
+
+$\beta_1 = \mu_{\text{membre}} - \mu_{\text{non-membre}}$
+
+
 ```{r}
 # On crée un graphique pour visualiser la distribution des distances
 # ggplot(data, aes(x = dur, fill = mem)) +
@@ -78,9 +113,11 @@ data %>%
 #     theme_minimal()
 
 model <- lm(dur ~ mem, data = data)
-summary(model)
-confint(model)
+summary(model)$coefficients
+```
+On rejette l'hypothèse nulle au niveau de signification de 0.05. Les membres de BIXI effectuent des trajets plus courts que les non-membres.
 
+```{r}
 predci <- data.frame(cbind(
     is_member = c(TRUE, FALSE),
     predict(
@@ -103,29 +140,28 @@ ggplot() +
 # QUESTION 1.2 : Les résultats sont-ils les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine?
 ```{r}
 # À CONFIRMER: 2 manières d'interpréter la question il me semble
-# Soit :
-model2 <- lm(dur ~ mem + is_weekend, data=data)
-summary(model)
-confint(model)
+# # Soit :
+# model2 <- lm(dur ~ mem + is_weekend, data=data)
+# summary(model)
 
-anova(model, model2)
+# anova(model, model2)
 
-# Ou:
+# Ou (je pense que c'est ça):
 week_ends <- data %>%
     filter(is_weekend)
 weekend_model <- lm(dur ~ mem, data=week_ends)
-summary(weekend_model)
-confint(weekend_model)
+summary(weekend_model)$coefficients
 
 week_days <- data %>%
     filter(!is_weekend)
 weekday_model <- lm(dur ~ mem, data=week_days)
-summary(weekday_model)
-confint(weekday_model)
-
+summary(weekday_model)$coefficients
 
 ```
+Réponse 1.2 : Oui, les résultats sont les mêmes si l'on tient compte de l'utilisation en fin de semaine ou en semaine. L'effet est plus significatif en fin de semaine.
+
 # QUESTION 2.1 : Est-ce que la durée des trajets est influencée par la météo?
+## On test d'abord l'impact des précipitations
 ```{r}
 data <- data %>% mutate(is_raining = prec > 0)
 
@@ -138,15 +174,31 @@ model <- lm(dur ~ prec, data=data)
 summary(model)
 ```
 
+# Puis, l'impact de la température
+```{r}
+model <- lm(dur ~ temp, data=data)
+summary(model)$coefficients
+```
+
 # QUESTION 2.2 : Au vu du résultat que vous obtenez,est-ce que vos modèles initiaux devraient être revisités?
 
 
 # QUESTION 3.1 : Les durées de trajets sont-elles différentes selon que l’on se trouve aux heures de pointe ou non en semaine?
 ```{r}
-
+# TODO: Vérifier si le facteur par défaut est le bon
+week_days <- week_days %>% mutate(pointe = fct_relevel(pointe, c("3","2","1")))
+model <- lm(dur ~ pointe, data=week_days)
+summary(model)$coefficients
 ```
 
 # QUESTION 3.2 : Existe-t-il des différences entre l’utilisation pour les heures de pointes en semaine le matin ou le soir?
+```{r}
+week_days_only_rush <- week_days %>% filter(pointe %in% c("1", "2"))
+
+model <- lm(dur ~ pointe, data=week_days_only_rush)
+summary(model)$coefficients
+```
+
 
 # Graphiques WIP
 ```{r}
