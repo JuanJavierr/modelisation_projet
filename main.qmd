@@ -11,6 +11,8 @@ format:
     code-fold: true
 ---
 ### TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln
+### TODO: Considérer des transformations potentielles pour les variables explicatives. Ex: polynômes
+### TODO: Considérer des interactions potentielles entre les variables explicatives
 ### TODO: Vérifier l'impact d'enlever les valeurs aberrantes sur la précision des modèles
 
 ### TODO: 
@@ -97,21 +99,16 @@ ggplot() + geom_col(data=by_date, aes(x=day, y=n)) +
 ```
 
 # QUESTION 1.1 : En moyenne, les membres de BIXI effectuent-ils des trajets plus courts que les non-membres?
-$\mathbb{H}_0: \beta_1 = 0$
+Nous sommes intéressés par l'hypothèse suivante: $\mathbb{H}_0: \beta_1 = 0$
 
-$\beta_1 = \mu_{\text{membre}} - \mu_{\text{non-membre}}$
+Où: $\beta_1 = \mu_{\text{membre}} - \mu_{\text{non-membre}}$
 
 
 ```{r}
-# On crée un graphique pour visualiser la distribution des distances
-# ggplot(data, aes(x = dur, fill = mem)) +
-#     geom_histogram(bins = 30) +
-#     labs(
-#         title = "Distribution des distances des déplacements",
-#         x = "Durée (s)", y = "Nombre de déplacements"
-#     ) +
-#     theme_minimal()
+#| label: question1.1
+#| code-fold: false
 
+# On effectue un test de Wald pour comparer les moyennes
 model <- lm(dur ~ mem, data = data)
 summary(model)$coefficients
 ```
@@ -138,22 +135,16 @@ ggplot() +
 ```
 
 # QUESTION 1.2 : Les résultats sont-ils les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine?
+On commence par séparer les données en fin de semaine et en semaine, puis on ajuste un modèle linéaire pour chaque groupe:
 ```{r}
-# À CONFIRMER: 2 manières d'interpréter la question il me semble
-# # Soit :
-# model2 <- lm(dur ~ mem + is_weekend, data=data)
-# summary(model)
+#| label: question1.2
+#| code-fold: false
+week_ends <- data %>% filter(is_weekend)
+week_days <- data %>% filter(!is_weekend)
 
-# anova(model, model2)
-
-# Ou (je pense que c'est ça):
-week_ends <- data %>%
-    filter(is_weekend)
 weekend_model <- lm(dur ~ mem, data=week_ends)
 summary(weekend_model)$coefficients
 
-week_days <- data %>%
-    filter(!is_weekend)
 weekday_model <- lm(dur ~ mem, data=week_days)
 summary(weekday_model)$coefficients
 

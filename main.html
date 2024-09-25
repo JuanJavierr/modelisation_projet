@@ -145,12 +145,15 @@ window.Quarto = {
 </header>
 
 
-<section id="todo-considérer-des-transformations-potentielles-pour-la-variable-réponse.-ex-ln" class="level1">
-<h1>TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln</h1>
+<section id="todo-considérer-des-transformations-potentielles-pour-la-variable-réponse.-ex-ln" class="level3">
+<h3 class="anchored" data-anchor-id="todo-considérer-des-transformations-potentielles-pour-la-variable-réponse.-ex-ln">TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln</h3>
 </section>
-<section id="todo-vérifier-limpact-denlever-les-valeurs-aberrantes-sur-la-précision-des-modèles" class="level1">
-<h1>TODO: Vérifier l’impact d’enlever les valeurs aberrantes sur la précision des modèles</h1>
-<p>Chaque fois qu’un modèle statistique est employé, veillez à : - rapporter les coefficients ou les différences estimées (avec des unités), avec une estimation de l’incertitude, - fournir des interprétations des paramètres sur une échelle adéquate, - tirer des conclusions qui reflètent le contexte, - discuter de la validité de vos analyses, - discuter de toute lacune ou limitation de vos modèles.</p>
+<section id="todo-vérifier-limpact-denlever-les-valeurs-aberrantes-sur-la-précision-des-modèles" class="level3">
+<h3 class="anchored" data-anchor-id="todo-vérifier-limpact-denlever-les-valeurs-aberrantes-sur-la-précision-des-modèles">TODO: Vérifier l’impact d’enlever les valeurs aberrantes sur la précision des modèles</h3>
+</section>
+<section id="todo" class="level3">
+<h3 class="anchored" data-anchor-id="todo">TODO:</h3>
+<p>“Chaque fois qu’un modèle statistique est employé, veillez à : - rapporter les coefficients ou les différences estimées (avec des unités), avec une estimation de l’incertitude, - fournir des interprétations des paramètres sur une échelle adéquate, - tirer des conclusions qui reflètent le contexte, - discuter de la validité de vos analyses, - discuter de toute lacune ou limitation de vos modèles.”</p>
 </section>
 <section id="import-et-formatage-des-données" class="level1">
 <h1>Import et formatage des données</h1>
@@ -247,23 +250,12 @@ window.Quarto = {
 </section>
 <section id="question-1.1-en-moyenne-les-membres-de-bixi-effectuent-ils-des-trajets-plus-courts-que-les-non-membres" class="level1">
 <h1>QUESTION 1.1 : En moyenne, les membres de BIXI effectuent-ils des trajets plus courts que les non-membres?</h1>
-<p><span class="math inline">\(\mathbb{H}_0: \beta_1 = 0\)</span></p>
-<p><span class="math inline">\(\beta_1 = \mu_{\text{membre}} - \mu_{\text{non-membre}}\)</span></p>
+<p>Nous sommes intéressés par l’hypothèse suivante: <span class="math inline">\(\mathbb{H}_0: \beta_1 = 0\)</span></p>
+<p>Où: <span class="math inline">\(\beta_1 = \mu_{\text{membre}} - \mu_{\text{non-membre}}\)</span></p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On crée un graphique pour visualiser la distribution des distances</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ggplot(data, aes(x = dur, fill = mem)) +</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#     geom_histogram(bins = 30) +</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#     labs(</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#         title = "Distribution des distances des déplacements",</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#         x = "Durée (s)", y = "Nombre de déplacements"</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#     ) +</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#     theme_minimal()</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data =</span> data)</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On effectue un test de Wald pour comparer les moyennes</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data =</span> data)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>             Estimate Std. Error   t value      Pr(&gt;|t|)
 (Intercept) 1020.0968   29.25882 34.864587 6.419615e-187
@@ -303,43 +295,29 @@ memTRUE     -225.3016   41.37823 -5.444931  6.226192e-08</code></pre>
 </section>
 <section id="question-1.2-les-résultats-sont-ils-les-mêmes-si-lon-tient-compte-de-lutilisation-en-fin-de-semaine-ou-en-semaine" class="level1">
 <h1>QUESTION 1.2 : Les résultats sont-ils les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine?</h1>
+<p>On commence par séparer les données en fin de semaine et en semaine:</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># À CONFIRMER: 2 manières d'interpréter la question il me semble</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># # Soit :</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># model2 &lt;- lm(dur ~ mem + is_weekend, data=data)</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># summary(model)</span></span>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>week_ends <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(is_weekend)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>week_days <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>is_weekend)</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># anova(model, model2)</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Ou (je pense que c'est ça):</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>week_ends <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(is_weekend)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>weekend_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data=</span>week_ends)</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(weekend_model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>weekend_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data=</span>week_ends)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(weekend_model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>             Estimate Std. Error   t value     Pr(&gt;|t|)
 (Intercept) 1076.8389   54.55111 19.740000 3.283444e-59
 memTRUE     -243.7167   77.14692 -3.159124 1.717088e-03</code></pre>
 </div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>week_days <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>is_weekend)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>weekday_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data=</span>week_days)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(weekday_model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>weekday_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> mem, <span class="at">data=</span>week_days)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(weekday_model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>             Estimate Std. Error   t value      Pr(&gt;|t|)
 (Intercept)  997.4000   34.66291 28.774273 1.508634e-129
 memTRUE     -217.9356   49.02076 -4.445781  9.852875e-06</code></pre>
 </div>
 </div>
-</section>
-<section id="réponse-1.2-oui-les-résultats-sont-les-mêmes-si-lon-tient-compte-de-lutilisation-en-fin-de-semaine-ou-en-semaine.-leffet-est-plus-significatif-en-fin-de-semaine." class="level1">
-<h1>Réponse 1.2 : Oui, les résultats sont les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine. L’effet est plus significatif en fin de semaine.</h1>
+<p>Réponse 1.2 : Oui, les résultats sont les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine. L’effet est plus significatif en fin de semaine.</p>
 </section>
 <section id="question-2.1-est-ce-que-la-durée-des-trajets-est-influencée-par-la-météo" class="level1">
 <h1>QUESTION 2.1 : Est-ce que la durée des trajets est influencée par la météo?</h1>
@@ -423,39 +401,68 @@ temp          3.694947    4.19456  0.8808903 3.785455e-01</code></pre>
 </section>
 <section id="question-3.1-les-durées-de-trajets-sont-elles-différentes-selon-que-lon-se-trouve-aux-heures-de-pointe-ou-non-en-semaine" class="level1">
 <h1>QUESTION 3.1 : Les durées de trajets sont-elles différentes selon que l’on se trouve aux heures de pointe ou non en semaine?</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: Vérifier si le facteur par défaut est le bon</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>week_days <span class="ot">&lt;-</span> week_days <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">pointe =</span> <span class="fu">fct_relevel</span>(pointe, <span class="fu">c</span>(<span class="st">"3"</span>,<span class="st">"2"</span>,<span class="st">"1"</span>)))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> pointe, <span class="at">data=</span>week_days)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Estimate Std. Error    t value     Pr(&gt;|t|)
+(Intercept)  912.6100   42.77408 21.3355829 5.193060e-82
+pointe2       41.2500   60.49169  0.6819119 4.954707e-01
+pointe1     -113.7833   60.49169 -1.8809747 6.029909e-02</code></pre>
+</div>
+</div>
 </section>
 <section id="question-3.2-existe-t-il-des-différences-entre-lutilisation-pour-les-heures-de-pointes-en-semaine-le-matin-ou-le-soir" class="level1">
 <h1>QUESTION 3.2 : Existe-t-il des différences entre l’utilisation pour les heures de pointes en semaine le matin ou le soir?</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>week_days_only_rush <span class="ot">&lt;-</span> week_days <span class="sc">%&gt;%</span> <span class="fu">filter</span>(pointe <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"1"</span>, <span class="st">"2"</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(dur <span class="sc">~</span> pointe, <span class="at">data=</span>week_days_only_rush)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)<span class="sc">$</span>coefficients</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Estimate Std. Error   t value     Pr(&gt;|t|)
+(Intercept)  953.8600   42.88186 22.243903 2.486722e-80
+pointe1     -155.0333   60.64411 -2.556445 1.082069e-02</code></pre>
+</div>
+</div>
 </section>
 <section id="graphiques-wip" class="level1">
 <h1>Graphiques WIP</h1>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On crée un graphique pour visualiser la distribution des distances</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(week_ends, <span class="fu">aes</span>(<span class="at">x =</span> dur, <span class="at">fill =</span> mem)) <span class="sc">+</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Distribution des distances des déplacements en fin de semaine"</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Durée (s)"</span>, <span class="at">y =</span> <span class="st">"Nombre de déplacements"</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>()</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>plot2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(week_days, <span class="fu">aes</span>(<span class="at">x =</span> dur, <span class="at">fill =</span> mem)) <span class="sc">+</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Distribution des distances des déplacements en semaine"</span>,</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Durée (s)"</span>, <span class="at">y =</span> <span class="st">"Nombre de déplacements"</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>()</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(plot1, plot2, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On crée un graphique pour visualiser la distribution des distances</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(week_ends, <span class="fu">aes</span>(<span class="at">x =</span> dur, <span class="at">fill =</span> mem)) <span class="sc">+</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Distribution des distances des déplacements en fin de semaine"</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Durée (s)"</span>, <span class="at">y =</span> <span class="st">"Nombre de déplacements"</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>()</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>plot2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(week_days, <span class="fu">aes</span>(<span class="at">x =</span> dur, <span class="at">fill =</span> mem)) <span class="sc">+</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Distribution des distances des déplacements en semaine"</span>,</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Durée (s)"</span>, <span class="at">y =</span> <span class="st">"Nombre de déplacements"</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>()</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(plot1, plot2, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="main_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="main_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
