@@ -10,8 +10,6 @@ format:
   html:
     code-fold: true
 ---
-### TODO: Considérer des transformations potentielles pour la variable réponse. Ex: ln
-### TODO: Considérer des transformations potentielles pour les variables explicatives. Ex: polynômes
 ### TODO: Considérer des interactions potentielles entre les variables explicatives
 ### TODO: Vérifier l'impact d'enlever les valeurs aberrantes sur la précision des modèles
 
@@ -31,6 +29,7 @@ format:
 
 library(tidyverse)
 library(gridExtra)
+library(emmeans)
 
 # On charge les données
 data_filename <- "MATH60604-projet-bixi_partie1_equipe1.csv"
@@ -53,6 +52,8 @@ data <- data %>%
         day = as.Date(date),
         is_weekend = jour %in% c("samedi", "dimanche")
     )
+
+data <- mutate(data, log_dur = log(dur))
 ```
 
 
@@ -78,10 +79,6 @@ La distribution des durées des déplacements semble être asymétrique à droit
 ```{r}
 #| label: EDA
 #| echo: false
-
-data <- data %>%
-    mutate(dur = log(dur))
-plot_dur()
 
 summary(data)
 
@@ -201,6 +198,9 @@ confint(weekend_model, level = 0.95)
 weekday_model <- lm(dur ~ mem, data=week_days)
 summary(weekday_model)$coefficients
 confint(weekday_model, level = 0.95)
+
+
+anova(weekend_model, weekday_model)
 ```
 Réponse 1.2 : Oui, les résultats sont les mêmes si l'on tient compte de l'utilisation en fin de semaine ou en semaine. L'effet est plus significatif en fin de semaine.
 
@@ -245,9 +245,17 @@ confint(model, level = 0.95)
 
 # QUESTION 3.2 : Existe-t-il des différences entre l’utilisation pour les heures de pointes en semaine le matin ou le soir?
 ```{r}
-week_days_only_rush <- week_days %>% filter(pointe %in% c("1", "2"))
 
-model <- lm(dur ~ pointe, data=week_days_only_rush)
+# TODO: Tester pour la variance aussi
+# week_days_only_rush <- week_days %>% filter(pointe %in% c("1", "2"))
+
+model <- lm(dur ~ pointe, data=week_days)
+emm <- emmeans(model, ~ pointe)
+
+# Define and test contrasts between the different categories of pointe
+# Contrast to compare morning peak (1) vs evening peak (2)
+contrast_results <- contrast(emm, method = list("Morning vs Evening" = c(1, -1, 0)))
+
 summary(model)$coefficients
 confint(model, level = 0.95)
 ```
