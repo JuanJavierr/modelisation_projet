@@ -1,0 +1,363 @@
+---
+title: "Modélisation - Projet partie 1"
+date: 2023-10-13
+author:
+    - Hilaire Touyem
+    - Xavier Lapointe
+    - Georges-Lemuel Balogog-Mandack
+    - Xavier Péladeau
+format:
+  pdf:
+    toc: true
+    # number-sections: true
+    colorlinks: true
+    echo: false
+    df-print: kable
+    warning: false
+---
+
+```{=html}
+<!-- ### TODO: Considérer des interactions potentielles entre les variables explicatives
+### TODO: Vérifier l'impact d'enlever les valeurs aberrantes sur la précision des modèles
+
+### TODO: 
+"Chaque fois qu’un modèle statistique est employé, veillez à :
+    - rapporter les coefficients ou les différences estimées (avec des unités), avec une estimation de
+    l’incertitude,
+    - fournir des interprétations des paramètres sur une échelle adéquate,
+    - tirer des conclusions qui reflètent le contexte,
+    - discuter de la validité de vos analyses,
+    - discuter de toute lacune ou limitation de vos modèles." -->
+```
+
+<!-- ## Import et formatage des données -->
+
+\pagebreak
+
+```{r}
+#| label: setup
+#| output: false
+
+
+library(tidyverse)
+library(gridExtra)
+library(emmeans)
+library(scales)
+
+options(digits = 4)
+
+# On charge les données
+data_filename <- "MATH60604-projet-bixi_partie1_equipe1.csv"
+raw_data <- read.csv(data_filename)
+
+# On convertit les colonnes aux types appropriés
+data <- raw_data %>%
+    mutate(
+        date = ymd_hms(dep),
+        jour = factor(jour, levels = c("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")),
+        mem = as.logical(mem),
+        pointe = as.factor(pointe)
+    ) %>%
+    select(-c(dep))
+
+# On ajoute des colonnes utiles à l'analyse
+data <- data %>%
+    mutate(
+        hour = as.integer(format(date, format = "%H")),
+        day = as.Date(date),
+        is_weekend = jour %in% c("samedi", "dimanche")
+    )
+
+data <- mutate(data, log_dur = log(dur))
+```
+
+## Analyse exploratoire
+
+### Distribution des durées des déplacements
+
+Nous procédons d'abord à une analyse exploratoire des données pour mieux comprendre la distribution des variables et les relations entre elles.
+
+```{r}
+#| label: fig-raw_duration
+#| fig-cap: "Distribution des durées des déplacements."
+#| echo: false
+
+
+ggplot(data, aes(x = dur)) +
+    geom_histogram(bins = 30) +
+    labs(
+        x = "Durée (s)", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+```
+
+La @fig-raw_duration affiche la distribution de la variable-réponse (durées des déplacements en seconde) observées dans l'échantillon. Celle-ci semble être asymétrique à droite. Comme les modèles de régression linéaires que nous utiliserons supposent une distribution normale des résidus, il pourrait être intéressant de considérer une transformation logarithmique pour la variable-réponse.
+
+```{r}
+#| label: fig-log_duration
+#| fig-cap: "Distribution du logarithme des durées des déplacements."
+#| echo: false
+
+
+ggplot(data, aes(x = log_dur)) +
+    geom_histogram(bins = 30) +
+    labs(
+        x = "log(Durée (s))", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+```
+
+La @fig-log_duration affiche la distribution de la variable-réponse après transformation logarithmique. Celle-ci semble plus symétrique et pourrait être plus appropriée pour les modèles de régression linéaire. Nous utiliserons donc le logarithme des durées des déplacements comme variable-réponse dans nos modèles.
+
+### Résumé des variables explicatives
+
+#### Variables catégorielles
+
+Le tableau @tbl-EDA présente le nombre d'observations pour chaque sous-groupe des variables catégorielles du jeu de données, afin de vérifier que les catégories sont bien balancées. Le jeu de données contient trois variables catégorielles, soient `jour`, `mem`, et `pointe`.
+
+```{r}
+#| label: tbl-EDA
+#| echo: false
+#| tbl-cap: "Résumé des variables catégorielles du jeu de données."
+
+# summary(raw_data)
+categorial_count <- data %>%
+    group_by(jour, mem, pointe) %>%
+    summarise(n = n())
+categorial_count <- pivot_wider(categorial_count, names_from = mem, values_from = n, names_glue = "mem_{mem}")
+categorial_count <- arrange(categorial_count, jour, pointe)
+categorial_count <- rename(categorial_count, "Nb de trajets non-membres" = mem_FALSE, "Nb de trajets membres" = mem_TRUE)
+categorial_count
+```
+
+#### Variables continues
+
+Les graphiques de la @fig-EDA-2 présente les statistiques descriptives des variables explicatives continues du jeu de données, soit `temp`, `prec` et `dep`. Ces statistiques permettent de mieux comprendre la distribution des variables continues et de détecter des valeurs aberrantes.
+
+```{r}
+#| label: fig-EDA-2
+#| echo: false
+#| fig-cap: "Distribution des variables explicatives continues du jeu de données."
+
+par(mfrow = c(1, 3))
+hist(data$temp, main = "Température", xlab = "Température (°C)", col = "lightblue")
+hist(data$prec, main = "Précipitation", xlab = "Précipitation (mm)", col = "lightblue")
+hist(as.Date(data$date), main = "Départ", xlab = "Départ", col = "lightblue", breaks = 30)
+
+```
+
+## Question 1.1 : En moyenne, les membres de BIXI effectuent-ils des trajets plus courts que les non-membres?
+
+Pour déterminer si les membres BIXI effectuent des trajets plus courts que les non-membres, nous définissons un modèle de régression linéaire modélisant uniquement la relation entre le statut de membre et la durée du trajet (Modèle 1) : $log(dur_i)=\beta_0+\beta_1 X_i+\epsilon_i$
+
+Où:
+
+-   $log(dur_i)$ représente la log-durée d'un trajet spécifique.
+
+-   $X$ indique si la personne est membre (1) ou non-membre (0) de BIXI.
+
+-   $\beta_0$ est la durée moyenne des trajets pour les non-membres.
+
+-   $\beta_1$ montre comment le fait d'être membre change la log-durée du trajet.
+
+-   $\epsilon_i$ est le terme d'erreur suivant une distribution normale $N(0, \sigma^2)$.
+
+Hypothèse nulle ($\mathbb{H}_0$) : Il n'y a pas de différence significative dans la durée moyenne des trajets entre les membres et les non-membres de BIXI.
+
+$\mathbb{H}_0 : \beta_1 = 0$
+
+```{r}
+#| echo: true
+model <- lm(log_dur ~ mem, data = data)
+coefs <- summary(model)$coefficients
+intervals <- confint(model)
+```
+
+Après avoir ajusté le modèle à notre échantillon, les paramètres prennent les valeurs suivantes:
+
+::::: {layout="[0.5, 0.5]"}
+::: {#firstcol}
+$\hat{\beta_0}=$ `{r} coefs["(Intercept)", "Estimate"]`
+:::
+
+::: {#secondcol}
+$\hat{\beta_1} =$ `{r} coefs["memTRUE", "Estimate"]`
+:::
+:::::
+
+La valeur négative prise par $\hat{\beta_1}$ (IC 95% \[`{r} confint(model)["memTRUE", "2.5 %"]`, `{r} confint(model)["memTRUE", "97.5 %"]`\]) indique que les usagers qui sont membres effectuent des trajets plus courts que les non-membres. Précisément, exp(-0.2541) - 1 ≈ `{r} percent(exp(coefs["memTRUE", "Estimate"]))`, signifiant que les membres font des trajets 22.4% plus courts en moyenne. En tenant compte de l'intervalle de confiance, cette réduction de la durée des trajets pour les membres se situe entre 15.5% et 28.8% avec 95% de confiance.
+
+En conclusion, l'analyse statistique nous permet de rejeter l'hypothèse nulle (H₀ : β₁ = 0) avec un haut degré de confiance (p \< 0.001). Nous pouvons donc conclure qu'il existe une différence significative dans la durée moyenne des trajets entre les membres et les non-membres de BIXI.
+
+## Question 1.2 : Les résultats sont-ils les mêmes si l’on tient compte de l’utilisation en fin de semaine ou en semaine?
+
+Pour déterminer s’il y a une différence de durée de trajet en fonction du statut de membre et du moment de la semaine, nous définissons le modèle de régression linéaire suivant (**Modèle 2**) :
+
+$$
+log(\text{dur}_i) = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + \beta_3(X_{1i} \times X_{2i}) + \epsilon_i
+$$
+
+Où : 
+
+-   $\text{dur}_i$ est la durée du trajet $i$.
+
+-   $X_1$ indique si la personne est membre (1) ou non-membre (0) de BIXI.
+
+-   $X_2$ indique si le trajet a lieu le weekend (1) ou en semaine (0).
+
+-   $\beta_0$ est la durée moyenne des trajets pour les non-membres en semaine.
+
+-   $\beta_1$ montre comment le fait d'être membre change la durée du trajet.
+
+-   $\beta_2$ montre comment le fait d'être le weekend change la durée du trajet.
+
+-   $\beta_3$ montre si l'effet d'être membre est différent le weekend par rapport à la semaine.
+
+-   $\epsilon_i$ est le terme d'erreur suivant une distribution normale $N(0, \sigma^2)$.
+
+```{r}
+#| echo: true
+model <- lm(log_dur ~ mem * is_weekend, data = data)
+coefs <- summary(model)$coefficients
+intervals <- confint(model)
+```
+
+Après avoir ajusté le modèle à notre échantillon, les paramètres prennent les valeurs suivantes:
+
+::::::: {layout="[0.25, 0.25, 0.25, 0.25]"}
+<div>
+
+$\hat{\beta_0}=$ `{r} coefs["(Intercept)", "Estimate"]`
+
+</div>
+
+<div>
+
+$\hat{\beta_1} =$ `{r} coefs["memTRUE", "Estimate"]`
+
+</div>
+
+::: {#thirdcol}
+$\hat{\beta_2} =$ `{r} coefs["is_weekendTRUE", "Estimate"]`
+:::
+
+::: {#fourthcol}
+$\hat{\beta_3} =$ `{r} coefs["memTRUE:is_weekendTRUE", "Estimate"]`
+:::
+:::::::
+
+En semaine, les membres font des trajets environ 20.5% (Calcul : exp(-0.22926) - 1) \* 100). plus courts que les non-membres (coefficient -0.22926, IC 95% \[-0.33014, -0.12838\], p \< 0.001). Cela correspond à une réduction de la durée du trajet entre 11.9% et 28.1% avec 95% de confiance.
+
+Le weekend, les membres font des trajets environ 17.7% plus courts que les non-membres (Calcul : exp(-0.22926 + 0.12153 - 0.08702) - 1) \* 100). L'effet du weekend (coefficient 0.12153, IC 95% \[-0.01193, 0.25499\], p = 0.0745) n'est pas statistiquement significatif au seuil de 0.05. De même, l'interaction entre le statut de membre et le weekend (coefficient -0.08702, IC 95% \[-0.27577, 0.10173\], p = 0.3664) n'est pas statistiquement significative. En conclusion, nous ne pouvons pas rejeter l'hypothèse nulle principale ou secondaire. Bien que nous observions une tendance générale où les membres effectuent des trajets significativement plus courts, nous ne pouvons pas affirmer avec certitude que le moment de la semaine ou son interaction avec le statut de membre influencent significativement la durée des trajets.
+
+## Question 2.1 : Est-ce que la durée des trajets est influencée par la météo?
+
+Deux variables météorologiques sont inclusent dans le jeu de données, soit la température (`temp`) et les précipitations (`prec`). Nous effectuerons un test pour chacune d'entre elles afin de déterminer si elles influencent la durée moyenne des trajets.
+
+### Impact de la température
+
+Pour tester l'impact de la température sur la durée des trajets, nous définissons le modèle de régression linéaire suivant (**Modèle 3**) : $log(\text{dur}_i) = \beta_0 + \beta_1 \text{temp}_i + \epsilon_i$
+
+Notre hypothèse nulle est que la température n'a pas d'effet significatif sur la durée moyenne des trajets Bixi :
+
+$\mathbb{H}_0: \beta_1 = 0$
+
+```{r}
+#| echo: true
+model <- lm(log_dur ~ temp, data = data)
+coefs <- summary(model)$coefficients
+intervals <- confint(model)
+```
+
+L'ordonnée à l'origine ($\beta_0$) de 6,363649 indique que lorsque la température est à 0°C, la durée moyenne prédite du trajet est d'environ 580,3 secondes (Calcul : exp(6,363649)). Le coefficient de température ($\beta_1$) de 0,008534 révèle que pour chaque augmentation d'un degré Celsius, la durée du trajet augmente en moyenne de 0,857% (Calcul : (exp(0,008534) - 1) \* 100). Ce coefficient n’est pas significatif (p-value = 0,0535), avec un intervalle de confiance à 95% allant de -0,014% à 1,736% d'augmentation.
+
+### Impact des précipitations
+
+Pour tester l'impact des précipitations sur la durée des trajets, nous définissons le modèle de régression linéaire suivant (**Modèle 4**) : $log(\text{dur}_i) = \beta_0 + \beta_1 \text{prec}_i + \epsilon_i$
+
+Notre hypothèse nulle est que le niveau de précipitation n'a pas d'effet significatif sur la durée moyenne des trajets Bixi :
+
+$\mathbb{H}_0: \beta_1 = 0$
+
+```{r}
+#| echo: true
+model <- lm(log_dur ~ prec, data = data)
+summary(model)
+```
+
+L'ordonnée à l'origine ($\beta_0$) de 6,528871 indique que lorsque les précipitations sont à leur valeur de référence dans le modèle, la durée moyenne prédite du trajet est d'environ 685,1 secondes (Calcul : exp(6,528871)). Quant au coefficient de précipitations ($\beta_1$) de -0,004693, il suggère une diminution moyenne de 0,468% de la durée du trajet pour chaque millimètre de précipitations supplémentaire (Calcul : (exp(-0,004693) - 1) \* 100). Cependant, ce coefficient n'est pas statistiquement significatif (p-value = 0,389), avec un intervalle de confiance à 95% allant de -1,546% à 0,617%.
+
+## Question 2.2 : Au vu du résultat que vous obtenez,est-ce que vos modèles initiaux devraient être revisités?
+
+Étant donné que les variables température et précipitations se sont révélées statistiquement non significatives dans leurs modèles respectifs, il n'est pas justifié de les incorporer au modèle initial. Cette conclusion s'applique également à la variable binaire distinguant les jours de semaine des week-ends, qui s'est aussi avérée non significative dans l’analyse précédente.
+
+## Question 3.1 : Les durées de trajets sont-elles différentes selon que l’on se trouve aux heures de pointe ou non en semaine?
+Comme cette question traite seulement des tendances lors des jours de semaine, nous excluons d'abord les observations des fins de semaine :
+```{r}
+#| echo: true
+data_week <- data %>% filter(!is_weekend)
+```
+
+Nous sommes intéressés par l'hypothèse suivante: $\mathbb{H}_0: \beta_1 = 0$
+Où: $\beta_1 = \mu_{\text{pointe} \in {1,2}} - \mu_{\text{pointe}=3}$
+
+```{r}
+
+# Filtre : Pour jours de semaine
+week_days <- data %>% filter(!is_weekend)
+week_ends <- data %>% filter(is_weekend)
+week_days <- week_days %>% mutate(
+    # pointe = fct_relevel(pointe, c("3", "2", "1")),
+    is_rush = pointe %in% c("1", "2")
+)
+
+model <- lm(log_dur ~ is_rush, data = week_days)
+summary(model)$coefficients
+confint(model, level = 0.95)
+```
+
+## Question 3.2 : Existe-t-il des différences entre l’utilisation pour les heures de pointes en semaine le matin ou le soir?
+Comme cette question traite seulement des tendances lors des heures de pointe, nous excluons d'abord les observations hors-pointe :
+
+```{r}
+#| echo: true
+data_week_rush <- filter(data_week, pointe %in% c("1", "2"))
+```
+
+On compare la moyenne des entrées pour les heures de pointe le matin et le soir. Nous sommes intéressés par l'hypothèse suivante: $\mathbb{H}_0: \beta_1 = 0$
+
+```{r}
+model <- lm(dur ~ pointe, data = week_days)
+emm <- emmeans(model, ~pointe)
+
+# Define and test contrasts between the different categories of pointe
+# Contrast to compare morning peak (1) vs evening peak (2)
+contrast_results <- contrast(emm, method = list("Morning vs Evening" = c(1, -1, 0)))
+contrast_results
+```
+
+## Graphiques WIP
+
+```{r}
+
+# On crée un graphique pour visualiser la distribution des distances
+
+plot1 <- ggplot(week_ends, aes(x = dur, fill = mem)) +
+    geom_histogram(bins = 30) +
+    labs(
+        title = "Distribution des distances des déplacements en fin de semaine",
+        x = "Durée (s)", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+
+plot2 <- ggplot(week_days, aes(x = dur, fill = mem)) +
+    geom_histogram(bins = 30) +
+    labs(
+        title = "Distribution des distances des déplacements en semaine",
+        x = "Durée (s)", y = "Nombre de déplacements"
+    ) +
+    theme_minimal()
+
+grid.arrange(plot1, plot2, ncol = 1)
+
+```
